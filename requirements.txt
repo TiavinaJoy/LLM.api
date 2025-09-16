@@ -1,0 +1,6 @@
+llama-cpp-python
+rich
+huggingface-hub
+python-dotenv
+fastapi==0.111.1          # Framework API
+uvicorn[standard]==0.23.2 # Serveur ASGI pour exécuter FastAPI

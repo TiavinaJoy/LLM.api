@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  ia-agent:
+    image: projet-ia-test-automation
+    build: .
+    volumes:
+      - ./models:/app/models
+      - ./.env:/app/.env
+      - ./logs:/app/logs
+    stdin_open: true # équivalent à -i
+    tty: true # équivalent à -t
