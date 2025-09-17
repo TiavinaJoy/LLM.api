@@ -2,6 +2,7 @@ from llama_cpp import Llama
 import os
 from dotenv import load_dotenv
 from huggingface_hub import hf_hub_download
+import threading
 
 load_dotenv()
 hf_token = os.getenv("HF_ACCESS_TOKEN")
@@ -14,7 +15,9 @@ class Agent:
         self.model_path = os.path.join("models", self.model_name)
         self.model = None
         self.ready = False
-        self.__load_agent()
+        print("threading...")
+        threading.Thread(target=self.__load_agent, daemon=True).start()
+        # self.__load_agent()
 
     def __load_agent(self):
         os.makedirs("models", exist_ok=True)
@@ -31,7 +34,7 @@ class Agent:
         try:
             self.model = Llama(model_path=self.model_path, verbose = False)
             self.ready = True
-            print('Built successfuly')
+            print('Modèle prêt')
         except Exception as e:
             print(f"Erreur lors du chargement du modèle: {e}")
             self.ready = False

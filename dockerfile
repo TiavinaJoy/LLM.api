@@ -14,5 +14,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt 
 # Copier le reste du projet 
 COPY . . 
+
+EXPOSE 8000
 # Commande par défaut 
-CMD ["python", "main.py"]
+# CMD ["python", "main.py"]
+CMD ["uvicorn","server:app", "--host", "0.0.0.0", "--port", "8000"]

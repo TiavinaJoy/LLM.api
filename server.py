@@ -6,6 +6,7 @@ app = FastAPI(title= "LLM Agent API")
 
 agent = Agent()
 
+
 class AskRequest(BaseModel):
     prompt: str
 
@@ -17,7 +18,8 @@ async def health_check():
 async def ask_llm(request:AskRequest):
     try:
         response = agent.ask(request.prompt)
+        print(f"Response: {response}")
         return {"response":response}
     except Exception as e:
-        raise HTTPException(status_code=500, details = str(e))
+        raise HTTPException(status_code=500, detail = str(e))
     

@@ -4,5 +4,5 @@ huggingface-hub
 python-dotenv
 fastapi==0.111.1          # Framework API
 uvicorn[standard]==0.23.2 # Serveur ASGI pour exécuter FastAPI
-pydantic==2.5.0
-python-multipart==0.0.6
+pydantic
+python-multipart

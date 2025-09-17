@@ -4,6 +4,8 @@ services:
   ia-agent:
     image: projet-ia-test-automation
     build: .
+    ports:
+      - "8000:8000"
     volumes:
       - ./models:/app/models
       - ./.env:/app/.env
