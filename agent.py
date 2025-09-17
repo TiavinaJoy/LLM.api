@@ -13,6 +13,7 @@ class Agent:
         self.model_repo = "microsoft/Phi-3-mini-4k-instruct-gguf"
         self.model_path = os.path.join("models", self.model_name)
         self.model = None
+        self.ready = False
         self.__load_agent()
 
     def __load_agent(self):
@@ -27,9 +28,19 @@ class Agent:
             print(f"Téléchargement terminé")
         else:
             print("Modèle déjà téléchargé")
-        self.model = Llama(model_path=self.model_path, verbose = False)
-        print('Built successfuly')
+        try:
+            self.model = Llama(model_path=self.model_path, verbose = False)
+            self.ready = True
+            print('Built successfuly')
+        except Exception as e:
+            print(f"Erreur lors du chargement du modèle: {e}")
+            self.ready = False
+            return
+        
 
+    def is_ready(self) ->bool:
+        return self.ready
+    
     def ask(self, prompt:str) ->str:
         if self.model is None:
             self.__load_agent()
