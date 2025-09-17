@@ -11,7 +11,7 @@ class AskRequest(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "llm_agent":agent.is_ready()}
 
 @app.post("/ask")
 async def ask_llm(request:AskRequest):
@@ -20,3 +20,4 @@ async def ask_llm(request:AskRequest):
         return {"response":response}
     except Exception as e:
         raise HTTPException(status_code=500, details = str(e))
+    
