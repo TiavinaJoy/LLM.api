@@ -51,6 +51,7 @@ class Agent:
         return self.ready
     
     def ask(self, prompt:str) ->str:
+        print(prompt)
         if self.model is None:
             self.__load_agent()
 
