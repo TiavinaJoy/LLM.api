@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from huggingface_hub import hf_hub_download
 import threading
+import time
 
 load_dotenv()
 hf_token = os.getenv("HF_ACCESS_TOKEN")
@@ -17,6 +18,10 @@ class Agent:
         self.ready = False
         print("threading...")
         threading.Thread(target=self.__load_agent, daemon=True).start()
+        while not self.is_ready():
+            print("Chargement du modele")
+            time.sleep(10)
+        print(f"is READY ==={self.ready}")
         # self.__load_agent()
 
     def __load_agent(self):
@@ -39,6 +44,7 @@ class Agent:
             print(f"Erreur lors du chargement du modèle: {e}")
             self.ready = False
             return
+        print("Sortie du thread de chargement")
         
 
     def is_ready(self) ->bool:

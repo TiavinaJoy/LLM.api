@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from agent import Agent
+import json
+import re
 
 app = FastAPI(title= "LLM Agent API")
 
@@ -17,9 +19,17 @@ async def health_check():
 @app.post("/ask")
 async def ask_llm(request:AskRequest):
     try:
-        response = agent.ask(request.prompt)
-        print(f"Response: {response}")
-        return {"response":response}
+        raw_response = agent.ask(request.prompt)
+        # Nettoyage : enlever ```json ... ``` si présent
+        cleaned = re.sub(r"```json\s*|```", "", raw_response, flags=re.IGNORECASE).strip()
+        # Essayer de parser en JSON
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError:
+            # si impossible, renvoyer juste texte
+            parsed = {"response": cleaned}
+        return parsed
     except Exception as e:
-        raise HTTPException(status_code=500, detail = str(e))
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
     
