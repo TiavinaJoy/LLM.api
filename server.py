@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from agent import Agent
 import json
 import re
+import traceback
 
 app = FastAPI(title= "LLM Agent API")
 
@@ -20,6 +21,7 @@ async def health_check():
 async def ask_llm(request:AskRequest):
     try:
         raw_response = agent.ask(request.prompt)
+        print(raw_response)
         # Nettoyage : enlever ```json ... ``` si présent
         cleaned = re.sub(r"```json\s*|```", "", raw_response, flags=re.IGNORECASE).strip()
         # Essayer de parser en JSON
@@ -31,5 +33,6 @@ async def ask_llm(request:AskRequest):
         return parsed
     except Exception as e:
         print(e)
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     
