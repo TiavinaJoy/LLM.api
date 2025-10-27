@@ -4,14 +4,39 @@ from agent import Agent
 import json
 import re
 import traceback
-
+import sqlite3
+DB_NAME = "llm_api.db"
+agent = None
 app = FastAPI(title= "LLM Agent API")
 
-agent = Agent()
+
+
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+CREATE TABLE IF NOT EXISTS htmlchunk( 
+                   id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                   url TEXT NOT NULL, 
+                   chunk TEXT NOT NULL 
+                   );
+""")
+    conn.commit()
+    conn.close()
 
 
 class AskRequest(BaseModel):
     prompt: str
+
+class FindHtmlRequest(BaseModel):
+    url: str
+    content: str
+
+@app.on_event("startup")
+def start_app():
+    init_db()
+    agent = Agent()
+
 
 @app.get("/health")
 async def health_check():
@@ -35,4 +60,11 @@ async def ask_llm(request:AskRequest):
         print(e)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/findHtml")
+async def findHtml(request: FindHtmlRequest):
+    try:
+        print(request.url, request.content)
+    except Exception as e:
+        print(e)
     
