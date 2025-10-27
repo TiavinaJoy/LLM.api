@@ -1,29 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from service.chunk_service import chunk_html, store_chunk
+from service.db_service import init_db
 from agent import Agent
 import json
 import re
 import traceback
 import sqlite3
-DB_NAME = "llm_api.db"
+
 agent = None
 app = FastAPI(title= "LLM Agent API")
 
-
-
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("""
-CREATE TABLE IF NOT EXISTS htmlchunk( 
-                   id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                   url TEXT NOT NULL, 
-                   chunk TEXT NOT NULL 
-                   );
-""")
-    conn.commit()
-    conn.close()
-
+init_db()
 
 class AskRequest(BaseModel):
     prompt: str
@@ -65,6 +53,10 @@ async def ask_llm(request:AskRequest):
 async def findHtml(request: FindHtmlRequest):
     try:
         print(request.url, request.content)
+        chunks = chunk_html(request.content)
+        for section in chunks:
+            store_chunk(request.url, section) 
+            ###### Dockerisation sqlite à faire !!!!!!!!!!!
     except Exception as e:
         print(e)
     
