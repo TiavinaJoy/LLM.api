@@ -9,16 +9,19 @@ import traceback
 import sqlite3
 
 agent = None
-app = FastAPI(title= "LLM Agent API")
+app = FastAPI(title="LLM Agent API")
 
 init_db()
+
 
 class AskRequest(BaseModel):
     prompt: str
 
+
 class FindHtmlRequest(BaseModel):
     url: str
     content: str
+
 
 @app.on_event("startup")
 def start_app():
@@ -28,15 +31,18 @@ def start_app():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "llm_agent":agent.is_ready()}
+    return {"status": "ok", "llm_agent": agent.is_ready()}
+
 
 @app.post("/ask")
-async def ask_llm(request:AskRequest):
+async def ask_llm(request: AskRequest):
     try:
         raw_response = agent.ask(request.prompt)
         print(raw_response)
         # Nettoyage : enlever ```json ... ``` si présent
-        cleaned = re.sub(r"```json\s*|```", "", raw_response, flags=re.IGNORECASE).strip()
+        cleaned = re.sub(
+            r"```json\s*|```", "", raw_response, flags=re.IGNORECASE
+        ).strip()
         # Essayer de parser en JSON
         try:
             parsed = json.loads(cleaned)
@@ -48,15 +54,17 @@ async def ask_llm(request:AskRequest):
         print(e)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @app.post("/findHtml")
 async def findHtml(request: FindHtmlRequest):
     try:
-        print(request.url, request.content)
+        # print(request.url, request.content)
         chunks = chunk_html(request.content)
-        for section in chunks:
-            store_chunk(request.url, section) 
-            ###### Dockerisation sqlite à faire !!!!!!!!!!!
+        return {"url": request.url, "chunks": chunks}
+        # for section in chunks:
+        #     store_chunk(request.url, section)
+        ###### Dockerisation sqlite à faire !!!!!!!!!!!
     except Exception as e:
+        print("ERROR--------------------------------")
         print(e)
-    
