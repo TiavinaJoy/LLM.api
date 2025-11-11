@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from service.chunk_service import chunk_html, store_chunk
+from service.chunk_service import useChunkHtml, store_chunk
 from service.db_service import init_db
 from agent import Agent
 import json
@@ -60,7 +60,7 @@ async def ask_llm(request: AskRequest):
 async def findHtml(request: FindHtmlRequest):
     try:
         # print(request.url, request.content)
-        chunks = chunk_html(request.content)
+        chunks = useChunkHtml(request.content)
         return {"url": request.url, "chunks": chunks}
         # for section in chunks:
         #     store_chunk(request.url, section)
