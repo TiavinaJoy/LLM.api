@@ -1,3 +1,7 @@
+import sqlite3
+from typing import Optional, Dict, Any, List
+from dataclasses import dataclass
+
 from llama_cpp import Llama
 import os
 from dotenv import load_dotenv
@@ -12,39 +16,39 @@ N_CTX = 4096
 
 
 class Agent:
-    """Agent de base pour les requêtes simples avec Phi"""
+    """Agent de base : Phi-3"""
 
-    def __init__(self, model_name: str = "phi"):
+    def __init__(self):
         self.model_name = "Phi-3-mini-4k-instruct-q4.gguf"
         self.model_repo = "microsoft/Phi-3-mini-4k-instruct-gguf"
         self.model_path = os.path.join("models", self.model_name)
         self.model = None
         self.ready = False
+
         threading.Thread(target=self.__load_agent, daemon=True).start()
         while not self.is_ready():
-            print("Chargement du modele")
+            print("Chargement du modele…")
             time.sleep(10)
-        print(f"is READY ==={self.ready}")
 
     def __load_agent(self):
         os.makedirs("models", exist_ok=True)
+
         if not os.path.exists(self.model_path):
-            print(f"Téléchargement du modèle...")
+            print(f"Téléchargement du modèle…")
             hf_hub_download(
                 repo_id=self.model_repo, filename=self.model_name, local_dir="models"
             )
             print(f"Téléchargement terminé")
         else:
             print("Modèle déjà téléchargé")
+
         try:
             self.model = Llama(model_path=self.model_path, verbose=False, n_ctx=N_CTX)
             self.ready = True
             print("Modèle prêt")
         except Exception as e:
-            print(f"Erreur lors du chargement du modèle: {e}")
+            print(f"Erreur: {e}")
             self.ready = False
-            return
-        print("Sortie du thread de chargement")
 
     def is_ready(self) -> bool:
         return self.ready
@@ -53,45 +57,27 @@ class Agent:
         tokens = self.model.tokenize(prompt.encode("utf-8"))
         return max(0, N_CTX - len(tokens))
 
-    def ask(self, question: str) -> str:
-        """
-        Pose une question au modèle Phi
-
-        Args:
-            question: La question de l'utilisateur
-
-        Returns:
-            La réponse du modèle
-        """
-        # self.conversation_history.append({"role": "user", "content": question})
-
-        response = self._call_phi(question)
-
-        # self.conversation_history.append({"role": "assistant", "content": response})
-
-        return response
-
-    def _call_phi(self, prompt: str) -> str:
-        """
-        Appel au modèle Phi
-        """
-        print(prompt)
+    def ask(self, prompt: str) -> str:
+        """Méthode utilisée par AgentRAG pour appeler Phi-3"""
         if self.model is None:
             self.__load_agent()
+
         self.model.reset()
+
         formatted_prompt = f"<|user|>\n{prompt}<|end|>\n<|assistant|>\n"
         formatted_prompt = formatted_prompt.encode("utf-8", errors="ignore").decode(
             "utf-8"
         )
-        # Stop tokens spécifiques à Phi-3
+
         stop_tokens = [
             "<|end|>",
             "<|user|>",
             "<|assistant|>",
-            "\n\n\n",  # Évite les générations trop longues
+            "\n\n\n",
             "###",
-            "Instruction",  # Évite les "Instruction 2", etc.
+            "Instruction",
         ]
+
         response = self.model(
             formatted_prompt,
             max_tokens=self.get_max_tokens(formatted_prompt),

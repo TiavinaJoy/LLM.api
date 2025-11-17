@@ -2,7 +2,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from service.chunk_service import useChunkHtml, store_chunk
 from service.db_service import init_db
-from agent import Agent
+from agents.agent import Agent
+
+# from agent import Agent
 import json
 import re
 import traceback
@@ -26,6 +28,7 @@ class FindHtmlRequest(BaseModel):
 @app.on_event("startup")
 def start_app():
     init_db()
+    print("Starting UP")
     agent = Agent()
 
 
