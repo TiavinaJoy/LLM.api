@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from service.chunk_service import useChunkHtml, store_chunk
 from service.db_service import init_db
-from agents.agent import Agent
+from agents.BaseAgent import Agent
 
 # from agent import Agent
 import json
@@ -10,10 +10,9 @@ import re
 import traceback
 import sqlite3
 
-agent = None
 app = FastAPI(title="LLM Agent API")
-
-init_db()
+# global agent
+# init_db()
 
 
 class AskRequest(BaseModel):
@@ -29,18 +28,24 @@ class FindHtmlRequest(BaseModel):
 def start_app():
     init_db()
     print("Starting UP")
-    agent = Agent()
+    app.state.agent = Agent()
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "llm_agent": agent.is_ready()}
+    if not hasattr(app.state, "agent") or app.state.agent is None:
+        return {
+            "status": "error",
+            "llm_agent": False,
+            "message": "Agent not initialized",
+        }
+    return {"status": "ok", "llm_agent": app.state.agent.is_ready()}
 
 
 @app.post("/ask")
 async def ask_llm(request: AskRequest):
     try:
-        raw_response = agent.ask(request.prompt)
+        raw_response = app.state.agent.ask(request.prompt)
         print(raw_response)
         # Nettoyage : enlever ```json ... ``` si présent
         cleaned = re.sub(
