@@ -1,0 +1,10 @@
+langchain
+langchain-community
+langchain_ollama
+langchain_chroma
+langgraph
+pypdf
+fastmcp
+uvicorn
+fastapi
+langchain-openai>=0.1.0

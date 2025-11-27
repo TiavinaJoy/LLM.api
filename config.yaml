@@ -1,0 +1,27 @@
+collections:
+  user_guide:
+    agent: qa_agent
+    description: >
+      Contains detailed explanations about how to use the platform features.
+      Includes topics such as tracking SLA deadlines, managing requests, and using dashboards.
+      Use this collection whenever the question is about how to perform or verify something on the platform.
+
+  rule_doc:
+    agent: qa_agent
+    description: >
+      Contains business and system architecture rules.
+      Explains system concepts such as roles, permissions, data flow, and status sequence.
+      Does NOT include SLA or feature-level information.
+
+  flow_doc:
+    agent: troubleshooting_agent
+    description: > 
+      Document that outlines the various workflows and processes that defines the automations and logic 
+      behind Sharepoint plateform.
+    type: flow
+
+  bug_doc:
+    agent: troubleshooting_agent
+    description: > 
+      Document that contains known bugs, their status, and resolutions.
+    type: bug

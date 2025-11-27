@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  # llama.cpp pour le LLM principal
+  llama-cpp:
+    build: 
+      context: .
+      dockerfile: Dockerfile.llamacpp
+    container_name: llama-cpp-server
+    ports:
+      - "8080:8080"
+    networks:
+      - mcp_global_net # <--- Attaché au réseau externe
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    command: >
+      llama-server
+      --model /models/qwen2.5-3b-instruct-q4_k_m.gguf
+      --host 0.0.0.0
+      --port 8080
+      --threads 4
+      --ctx-size 4096
+      --parallel 1
+      --cont-batching
+      --jinja
+
+  python-app:
+    build: .
+    container_name: python-app
+    stdin_open: true  # Permet l'input interactif (-i)
+    tty: true         # Alloue un pseudo-TTY (-t)
+    depends_on:
+      llama-cpp:
+        condition: service_healthy
+      # ollama:
+      #   condition: service_started
+    env_file:
+      - .env    
+    volumes:
+      - .:/app
+    ports:
+      - "8003:8003"
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8003
+      --reload    
+    networks:
+          - mcp_global_net
+networks:
+  mcp_global_net:
+    external: true
+# volumes:
+#   ollama_data:
