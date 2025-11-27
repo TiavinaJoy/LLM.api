@@ -1,0 +1,53 @@
+# === Étape 1 : Build ===
+FROM ubuntu:22.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp
+RUN git clone https://github.com/ggerganov/llama.cpp.git
+WORKDIR /tmp/llama.cpp
+
+# Build with static linking where possible
+RUN mkdir build && cd build && \
+    cmake .. -DLLAMA_BUILD_SERVER=ON -DBUILD_SHARED_LIBS=OFF && \
+    cmake --build . -j$(nproc)
+
+# === Étape 2 : Runtime ===
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install runtime dependencies including libgomp (OpenMP runtime)
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    libcurl4 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the binary
+COPY --from=builder /tmp/llama.cpp/build/bin/llama-server /usr/local/bin/
+
+# Prepare models directory
+RUN mkdir -p /models
+WORKDIR /models
+RUN wget -q https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf
+
+EXPOSE 8080
+
+CMD ["llama-server", \
+     "--model", "/models/qwen2.5-3b-instruct-q4_k_m.gguf", \
+     "--host", "0.0.0.0", \
+     "--port", "8080", \
+     "--threads", "4", \
+     "--ctx-size", "4096", \
+     "--parallel", "1", \
+    "--cont-batching", \
+     "--jinja"]
