@@ -2,8 +2,8 @@ import os
 import uvicorn
 from fastapi import FastAPI, HTTPException
 # from fastapi.middleware.cors import CORSMiddleware
-from service import AgentService
-from util import AskRequest
+# from service import AgentService
+# from util import AskRequest
 
 # --- Initialisation du service des agents ---
 # agent_service = AgentService()
@@ -22,16 +22,16 @@ app = FastAPI(title="LLM Agent API", version="1.0.0")
 # --- Endpoints ---
 @app.get("/")
 def root():
-    return {"message": "MCP Agents API is running"}
+    return {"message": "API LLM is up"}
 
 
-@app.post("/ask")
-def ask_agent(request: AskRequest):
-    try:
-        response = agent_service.query_agent(request.agent_name, request.question)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.post("/ask")
+# def ask_agent(request: AskRequest):
+#     try:
+#         response = agent_service.query_agent(request.agent_name, request.question)
+#         return response
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 # --- Lancement via Uvicorn ---

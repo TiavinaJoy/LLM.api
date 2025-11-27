@@ -50,4 +50,6 @@ CMD ["llama-server", \
      "--ctx-size", "4096", \
      "--parallel", "1", \
     "--cont-batching", \
-     "--jinja"]
+     "--jinja",\
+     "--alias", "qwen2.5-3b-instruct-q4_k_m", \
+     "--no-cache-prompt"]

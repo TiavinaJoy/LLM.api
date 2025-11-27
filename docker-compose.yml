@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - mcp_global_net # <--- Attaché au réseau externe
+      - llm_agent # <--- Attaché au réseau externe
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -50,9 +50,9 @@ services:
       --port 8003
       --reload    
     networks:
-          - mcp_global_net
+          - llm_agent
 networks:
-  mcp_global_net:
+  llm_agent:
     external: true
 # volumes:
 #   ollama_data:
