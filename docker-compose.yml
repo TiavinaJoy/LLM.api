@@ -13,9 +13,9 @@ services:
       - llm_agent # <--- Attaché au réseau externe
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
-      retries: 5
+      retries: 3
       start_period: 60s
     command: >
       llama-server
@@ -48,7 +48,14 @@ services:
       uvicorn main:app
       --host 0.0.0.0
       --port 8003
-      --reload    
+      --reload
+      --log-level info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s    
     networks:
           - llm_agent
 networks:
