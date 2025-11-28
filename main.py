@@ -63,10 +63,13 @@ def findHtmlv1(request:FindRequest):
     Save chunks (url , customId, chunk)
 
     """
-    chunked_html = use_chunk_html(request.htmlcontent)
-    add_chunks(request.url, chunked_html)
-    query = request.action + request.target
-    return chunked_html.search_element(url= request.url, query = query)
+    try:
+        chunked_html = use_chunk_html(request.htmlcontent)
+        add_chunks(request.url, chunked_html)
+        query = request.action + request.target
+        return chunked_html.search_element(url= request.url, query = query)
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail = str(e))
 
 @app.post("/find/v0")
 def findHtml(request:AskRequest):
