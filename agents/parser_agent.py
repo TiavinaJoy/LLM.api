@@ -1,6 +1,6 @@
 import json
 import re
-from agents.base_agents import BaseAgent
+from agents.base_agent import BaseAgent
 from langchain_core.messages import HumanMessage
 
 

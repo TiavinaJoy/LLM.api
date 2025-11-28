@@ -2,9 +2,15 @@ langchain
 langchain-community
 langchain_ollama
 langchain_chroma
+langchain_openai
 langgraph
 pypdf
 fastmcp
 uvicorn
 fastapi
 langchain-openai>=0.1.0
+langchain-huggingface
+langchain_chroma
+beautifulsoup4
+lxml
+html_chunking

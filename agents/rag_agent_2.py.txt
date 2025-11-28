@@ -1,0 +1,271 @@
+import sqlite3
+import json
+import re
+from typing import List, Dict
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_community.vectorstores import Chroma
+# from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain.schema import Document
+from agents.base_agent import BaseAgent
+from langchain_core.documents import Document
+# from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama import OllamaEmbeddings
+from langchain_chroma import Chroma
+
+
+class HTMLRagAgent(BaseAgent):
+    """
+    Agent RAG multilingue pour la recherche d'éléments HTML.
+    Supporte les queries en français sur du contenu HTML en anglais.
+    """
+    
+    def __init__(self, db_path: str, persist_dir: str = "./chroma_html"):
+        super().__init__(
+            name="HTMLRagAgent",
+            description="Recherche multilingue d'éléments HTML avec génération de sélecteurs",
+            system_prompt=self._system_prompt(),
+            tools=[]
+        )
+        self.db_path = db_path
+        self.persist_dir = persist_dir
+        
+        # ✅ Embeddings multilingues (FR→EN)
+        print("Initializing multilingual embeddings...")
+        self.embeddings = OllamaEmbeddings(
+            model="nomic-embed-text"
+        )
+        
+        # Charger ou créer le vector store
+        self.vectorstore = self._load_vectorstore()
+        print("✅ HTMLRagAgent ready with multilingual support")
+    
+    def _system_prompt(self):
+        return """Tu es un agent expert en analyse d'éléments HTML.
+
+Ton rôle :
+- Identifier l'élément HTML exact correspondant à la demande utilisateur
+- Extraire toutes ses informations utiles
+- Générer des sélecteurs CSS & XPath robustes
+- Déduire l'action probable à effectuer
+
+IMPORTANT :
+ Ne JAMAIS inventer d'HTML
+ Ne JAMAIS modifier le chunk fourni
+ Ne JAMAIS créer un sélecteur non basé sur les attributs existants
+ Analyse uniquement le HTML fourni dans les chunks
+ L'élément correspondant sera toujours présent dans un des chunks fournis
+
+Format JSON strict :
+{
+  "element": {
+    "html": "<...exact original chunk...>",
+    "type": "button | input | link | div | etc.",
+    "action": "click | type | open | verify",
+    "selector": {
+      "css": "sélecteur css robuste",
+      "xpath": "sélecteur xpath robuste"
+    },
+    "confidence": "high | medium | low"
+  }
+}
+
+Retourne uniquement le JSON valide, rien d'autre."""
+    
+    def add_chunks(self, url: str, chunks: List[str]):
+        """
+        Ajoute de nouveaux chunks HTML au vector store.
+        
+        Args:
+            url: URL de la page
+            chunks: Liste de chunks HTML
+        """
+        # Ajouter à SQLite
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''CREATE TABLE IF NOT EXISTS html_chunks
+                     (url TEXT, chunk TEXT)''')
+        
+        c.executemany(
+            "INSERT INTO html_chunks (url, chunk) VALUES (?, ?)",
+            [(url, chunk) for chunk in chunks]
+        )
+        
+        conn.commit()
+        conn.close()
+
+    def _load_vectorstore(self):
+        """Charge les chunks HTML dans un vector store multilingue."""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute("SELECT url, chunk FROM html_chunks")
+            rows = c.fetchall()
+        except sqlite3.OperationalError:
+            print("⚠️  Table html_chunks not found. Creating empty vectorstore.")
+            conn.close()
+            return Chroma(
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_dir
+            )
+        
+        conn.close()
+        
+        if not rows:
+            print("⚠️  No chunks found in database")
+            return Chroma(
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_dir
+            )
+        
+        print(f"📦 Loading {len(rows)} HTML chunks into vector store...")
+        
+        # Préparer les documents
+        documents = [
+            Document(
+                page_content=chunk,
+                metadata={"url": url, "chunk_id": i}
+            )
+            for i, (url, chunk) in enumerate(rows)
+        ]
+        
+        # Créer le vector store
+        vectorstore = Chroma.from_documents(
+            documents=documents,
+            embedding=self.embeddings,
+            persist_directory=self.persist_dir
+        )
+        
+        print(f"✅ Vector store created with {len(documents)} chunks")
+        return vectorstore
+    
+    def search_element(
+        self, 
+        url: str, 
+        query: str, 
+        top_k: int = 3,  # Moins de chunks car ils sont plus gros
+        min_score: float = 0.3
+    ) -> Dict:
+        """
+        Recherche un élément HTML avec support multilingue (FR→EN).
+        
+        Args:
+            url: URL de la page
+            query: Description de l'élément en français ou anglais
+            top_k: Nombre de chunks à récupérer
+            min_score: Score minimum de similarité (0-1)
+            
+        Returns:
+            Dict avec l'élément trouvé et ses sélecteurs
+            
+        Example:
+            >>> agent.search_element(
+            ...     url="https://example.com/login",
+            ...     query="trouve le bouton de connexion"  # FR
+            ... )
+            {
+                "element": {
+                    "html": "<button id='login'>Login</button>",  # EN
+                    "selector": {"css": "#login", ...}
+                }
+            }
+        """
+        print(f"\n🔍 Searching: \"{query}\" on {url}")
+        
+        # Recherche vectorielle multilingue avec filtre sur l'URL
+        results = self.vectorstore.similarity_search_with_score(
+            query=query,
+            k=top_k * 2,  # Récupérer plus pour filtrer ensuite
+            filter={"url": url}
+        )
+        
+        if not results:
+            print(f"❌ No chunks found for URL: {url}")
+            return {"error": "No chunks found for this URL"}
+        
+        # Filtrer par score minimum
+        filtered_results = [
+            (doc, score) for doc, score in results 
+            if (1 - score) >= min_score  # Chroma retourne distance, pas similarité
+        ]
+        
+        if not filtered_results:
+            print(f"⚠️  No results above minimum score {min_score}")
+            filtered_results = results[:top_k]  # Fallback
+        
+        # Prendre seulement les top_k après filtrage
+        top_chunks = filtered_results[:top_k]
+        
+        # Afficher les scores avec aperçu du contenu
+        print(f"📊 Top {len(top_chunks)} HTML blocks found:")
+        for i, (doc, score) in enumerate(top_chunks, 1):
+            similarity = 1 - score  # Convertir distance en similarité
+            # Afficher les premières lignes du bloc
+            preview = doc.page_content.replace('\n', ' ')[:80]
+            print(f"  {i}. [{similarity:.3f}] {preview}...")
+        
+        # Préparer le contexte pour le LLM
+        html_chunks = [doc.page_content for doc, _ in top_chunks]
+        
+        messages = [
+            SystemMessage(content=self.system_prompt),
+            HumanMessage(content=f"""QUESTION: {query}
+
+HTML CHUNKS (les plus pertinents):
+{chr(10).join([f"Chunk {i+1}:{chr(10)}{chunk}{chr(10)}---" for i, chunk in enumerate(html_chunks)])}
+
+Analyse ces chunks et identifie l'élément correspondant à la question.""")
+        ]
+        
+        # Appel LLM
+        result = self.llm.invoke(messages)
+        
+        # Parser le JSON
+        try:
+            element_info = self._parse_json_response(result.content)
+            print(f"✅ Element found: {element_info['element']['type']}")
+            return element_info
+        except Exception as e:
+            print(f"❌ Error parsing response: {e}")
+            return {
+                "error": str(e),
+                "raw_response": result.content
+            }
+    
+    def _parse_json_response(self, response: str) -> Dict:
+        """Extrait et parse le JSON de la réponse du LLM."""
+        # Retirer les backticks markdown
+        response = re.sub(r'```json\s*', '', response)
+        response = re.sub(r'```\s*', '', response)
+        
+        # Trouver le JSON
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        if json_match:
+            json_str = json_match.group(0)
+            element_info = json.loads(json_str)
+            
+            # Valider la structure
+            if 'element' not in element_info:
+                raise ValueError("Missing 'element' key in response")
+            
+            return element_info
+        else:
+            raise ValueError("No valid JSON found in response")
+    
+    
+        
+        # Ajouter au vector store
+        from langchain.schema import Document
+        documents = [
+            Document(
+                page_content=chunk,
+                metadata={"url": url}
+            )
+            for chunk in chunks
+        ]
+        
+        self.vectorstore.add_documents(documents)
+        print(f"✅ Added {len(chunks)} chunks for {url}")
+
+

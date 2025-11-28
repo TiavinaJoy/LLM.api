@@ -17,7 +17,8 @@ WORKDIR /tmp/llama.cpp
 # Build with static linking where possible
 RUN mkdir build && cd build && \
     cmake .. -DLLAMA_BUILD_SERVER=ON -DBUILD_SHARED_LIBS=OFF && \
-    cmake --build . -j$(nproc)
+    cmake --build . -j$(( $(nproc) - 1 ))
+    # cmake --build . -j$(nproc)
 
 # === Étape 2 : Runtime ===
 FROM ubuntu:22.04
