@@ -37,6 +37,7 @@ Format JSON strict :
     "type": "button | input | link | div | etc.",
     "action": "click | type | open | verify",
     "selector": {
+      "id":"id de l'element si existant",
       "css": "sélecteur css robuste",
       "xpath": "sélecteur xpath robuste"
     },

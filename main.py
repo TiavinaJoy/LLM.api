@@ -64,10 +64,11 @@ def findHtmlv1(request:FindRequest):
 
     """
     try:
+        agent = HtmlFinder()
         chunked_html = use_chunk_html(request.htmlcontent)
         add_chunks(request.url, chunked_html)
         query = request.action + request.target
-        return chunked_html.search_element(url= request.url, query = query)
+        return agent.search_element(url= request.url, query = query)
     except Exception as e:
         raise HTTPException(status_code = 500, detail = str(e))
 
