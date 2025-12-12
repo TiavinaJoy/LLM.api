@@ -1,0 +1,198 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Python Module
+meta:
+  id: wrk_81aaad8e2ef64a5abe2bd80420f903b8
+  created: 1764240296250
+  modified: 1764941665977
+  description: ""
+collection:
+  - url: http://localhost:8003
+    name: check App running
+    meta:
+      id: req_38f1397e10de4592a3e84405d3af05df
+      created: 1764240296274
+      modified: 1764298728198
+      isPrivate: false
+      description: ""
+      sortKey: -1764240296274
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8003/askagent
+    name: askAgent
+    meta:
+      id: req_0440dfc566304168988a5066088a4441
+      created: 1764240353181
+      modified: 1764245123717
+      isPrivate: false
+      description: ""
+      sortKey: -1764240353181
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+            "agent_name":"",
+            "question":"Lequel de ces deux nom de couleur ne commence pas par 'b': blanc , noir"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8003/parse
+    name: parseScenario
+    meta:
+      id: req_c141b83ffb9a4802b2e48d23bbbc4688
+      created: 1764246980968
+      modified: 1764259535472
+      isPrivate: false
+      description: ""
+      sortKey: -1764240324727.5
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+            "agent_name":"",
+            "question":"Ouvrir 'accesbanque.mg', cliquer sur 'ENTRER', Remplir le champ codeAgent par 'AG001'"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/health
+    name: New Request
+    meta:
+      id: req_6bb380959284492eaab457b67e30a433
+      created: 1764298754148
+      modified: 1764308964466
+      isPrivate: false
+      description: ""
+      sortKey: -1764298754148
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8003/find/v0
+    name: "Find HTML "
+    meta:
+      id: req_7da72a45f5ef489895739bdc75590261
+      created: 1764298767104
+      modified: 1764336296166
+      isPrivate: false
+      description: ""
+      sortKey: -1764269553664.5
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+            "agent_name":"",
+            "question":"asking1"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8003/find/v1
+    name: Find HTML V1
+    meta:
+      id: req_0593ded85fac48939e94ff6f7fbf37f5
+      created: 1764342343107
+      modified: 1764344437300
+      isPrivate: false
+      description: ""
+      sortKey: -1764254953422.75
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+          "action": "type",
+          "target": "email",
+          "url": "https://example.com/login",
+          "htmlcontent": "<header class=\"navbar\"><div class=\"logo\"><img src=\"/logo.png\" alt=\"Company Logo\"></div><nav><a href=\"/\">Home</a><a href=\"/about\">About</a><a href=\"/contact\">Contact</a></nav></header><div class=\"login-form\"><h2>Sign in to your account</h2><form id=\"login-form\" method=\"POST\"><div class=\"form-group\"><label for=\"email\">Email address</label><input type=\"email\" id=\"email\" name=\"user_email\" class=\"form-control\" placeholder=\"Enter your email\" required></div><div class=\"form-group\"><label for=\"password\">Password</label><input type=\"password\" id=\"password\" name=\"user_password\" class=\"form-control\" placeholder=\"Enter your password\" required><small class=\"form-text\"><a href=\"/forgot-password\" class=\"forgot-link\">Forgot your password?</a></small></div></form></div>"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_93e6e68f695058d71f0696a8f529b65d1db89432
+    created: 1764240296255
+    modified: 1764240296255
+environments:
+  name: Base Environment
+  meta:
+    id: env_93e6e68f695058d71f0696a8f529b65d1db89432
+    created: 1764240296253
+    modified: 1764240296253
+    isPrivate: false
